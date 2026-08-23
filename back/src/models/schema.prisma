@@ -1,0 +1,246 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User{
+  id           String    @id @default(cuid())
+  firstName    String
+  lastName     String
+  email        String    @unique
+  password     String
+  phone        String
+  dateOfBirth  DateTime  @db.Date
+  gender       String
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  wishlist     Wishlist[]
+  coupons      Coupon[]
+  cart         Cart?
+  reviews      Review[]
+  orders       Order[]
+
+}
+
+model Coupon{ 
+  id             String @id @default(cuid())
+  value          Float
+  code           String
+  expirationDate DateTime @db.Date
+  isActive Boolean @default(true)
+
+  userId User[]
+  cartsId Cart[]
+  isActive       Boolean @default(true)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+
+  carts          Cart[]
+}
+
+model Product {
+  id          String @id @default(cuid())
+  name        String
+  description String
+  price       Float
+  rating      Float
+
+  variants    ProductVariant[]
+  wishlist    Wishlist[]
+  reviews     Review[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  categoryId  String
+  category    Category   @relation(fields: [categoryId], references: [id])
+}
+
+model ProductVariant{
+  id             String @id @default(cuid())
+  size           String
+  color          String
+  stockQuantity  Int
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  productId      String
+  product        Product   @relation(fields: [productId], references: [id])
+
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
+}
+
+model Category{
+  id         String @id @default(cuid())
+  name       String
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  products   Product[]
+  
+}
+
+model Cart{
+  id          String @id @default(cuid())
+  totalPrice  Float
+  savings     Float
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String @unique
+  user        User @relation( fields: [userId], references: [id])
+
+  items       CartItem[]
+
+  couponId    String?
+  coupon      Coupon?    @relation(fields: [couponId], references: [id])
+}
+
+model CartItem {
+  id          String  @id @default(cuid())
+  quantity    Int
+  unitPrice   Float
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cartId      String
+  cart        Cart   @relation(fields: [cartId], references: [id])
+
+  variantId String
+  variant ProductVariant @relation(fields: [variantId], references: [id])
+
+  @@unique([cartId, variantId])
+}
+
+model Wishlist{
+  userId      String
+  user        User @relation(fields: [userId],references: [id])
+
+  createdAt   DateTime @default(now())
+
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+
+  @@id([userId, productId])
+}
+
+model Review{
+  id          String @id @default(cuid())
+  rating      Float
+  comment     String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String
+  user        User @relation(fields: [userId], references: [id])
+
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+}
+
+model Order{
+  id           String @id @default(cuid())
+  status       Boolean
+  totalPrice   Float
+  address      String
+  placedOn     DateTime @default(now())
+
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  paymentId Payment[]
+  shippingId String @unique
+  shipping Shipping @relation("shippingOrder", fields: [shippingId], references: [id])
+  orderItemId String @unique
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  userId       String
+  user         User @relation(fields: [userId], references: [id])
+
+  payments     Payment[]
+
+  shipping     Shipping?
+
+  orderItems   OrderItem[]
+
+}
+
+model Payment{
+  id              String @id @default(cuid())
+  method          String
+  lastFourDigits  String
+  ownerName       String
+  status          Boolean
+  amount          Float
+
+  orderId String
+  order Order @relation(fields: [orderId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  orderId         String
+  order           Order   @relation(fields: [orderId], references: [id])
+
+}
+
+model Shipping{
+  id                  String @id @default(cuid())
+  shippingMethod      String
+  shippingCost        Float
+  trackingNumber      String
+  recipientFirstName  String
+  recipientLastName   String
+  zipCode             String
+  streetAddress       String
+  apartmentSuite      String?
+  city                String
+  state               String
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  orderId             String  @unique
+  order               Order   @relation(fields: [orderId], references: [id])
+}
+
+model OrderItem{
+  id          String @id @default(cuid())
+  quantity    Int
+  unitPrice   Float
+
+  OrderId Order?
+  variantId String @unique
+  variant ProductVariant @relation(fields: [variantId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderId     String
+  order       Order @relation(fields: [orderId], references: [id])
+
+  variantId   String
+  variant     ProductVariant @relation(fields: [variantId], references: [id])
+}
