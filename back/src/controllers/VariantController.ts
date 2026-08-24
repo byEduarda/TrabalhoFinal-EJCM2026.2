@@ -9,7 +9,7 @@ export class VariantController {
         try{
             const {size, color, stockQuantity, productId} = req.body;
 
-            const newVariant = await prisma.ProductVariant.create({
+            const newVariant = await prisma.productVariant.create({
                 data: {
                     size,
                     color,
