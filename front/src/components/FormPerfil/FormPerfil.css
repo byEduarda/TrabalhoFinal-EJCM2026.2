@@ -1,3 +1,12 @@
+.form-perfil-error {
+    background-color: #fdecee;
+    color: #e0233f;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin: 0;
+}
 .number{
     font-size: 24px;
     font-weight: 700;

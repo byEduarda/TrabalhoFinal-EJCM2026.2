@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useState, useEffect, type ReactNode } from 'react'
 import { api } from '../services/api'
 
 interface AuthUser {
@@ -13,6 +13,7 @@ interface AuthContextType {
   user: AuthUser | null
   signIn: (data: { email: string; password: string }) => Promise<void>
   signOut: () => void
+  updateUser: (data: Partial<AuthUser>) => void
 }
 
 export const AuthContext = createContext({} as AuthContextType)
@@ -49,8 +50,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
+  const updateUser = (data: Partial<AuthUser>) => {
+    setUser((current) => {
+      if (!current) return current
+      const updated = { ...current, ...data }
+      localStorage.setItem('@App:user', JSON.stringify(updated))
+      return updated
+    })
+  }
+
   return (
-    <AuthContext.Provider value={{ token, user, signIn, signOut }}>
+    <AuthContext.Provider value={{ token, user, signIn, signOut, updateUser }}>
       {children}
     </AuthContext.Provider>
   )
